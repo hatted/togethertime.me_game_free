@@ -281,8 +281,8 @@
 
     <div class="setup-container" id="setupContainer">
         <h3>Setup Your Wheel</h3>
-        <p>How many numbers do you want on the wheel? (2-20)</p>
-        <input type="number" class="setup-input" id="numberInput" placeholder="6" min="2" max="20" value="6">
+        <p>How many numbers do you want on the wheel? (2-30)</p>
+        <input type="number" class="setup-input" id="numberInput" placeholder="6" min="2" max="30" value="6">
         <button class="setup-btn" onclick="createWheel()">CREATE WHEEL</button>
     </div>
 
@@ -327,6 +327,12 @@
         let isSpinning = false;
         let segmentCenters = {};
         let selectedSequence = [];
+        let currentRotation = 0;
+
+        // Testing mode
+        // const TESTING_MODE = true;
+        const TESTING_MODE = false;
+        let testRotation = 0;
 
         // Color palette for segments
         const colors = [
@@ -340,19 +346,32 @@
             const input = document.getElementById('numberInput');
             const numSegments = parseInt(input.value);
 
-            if (numSegments < 2 || numSegments > 20) {
-                alert('Please enter a number between 2 and 20');
+            if (numSegments < 2 || numSegments > 30) {
+                alert('Please enter a number between 2 and 30');
                 return;
             }
 
             totalNumbers = numSegments;
             availableNumbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
 
-            // Calculate segment centers
+            // Calculate segment centers and show ranges
             const segmentAngle = 360 / totalNumbers;
             segmentCenters = {};
+            console.log('=== SEGMENT RANGES ===');
+            console.log('Segment angle:', segmentAngle);
+
             for (let i = 1; i <= totalNumbers; i++) {
+                const segmentStart = (i - 1) * segmentAngle;
+                const segmentEnd = i * segmentAngle;
+                console.log(`${segmentStart}-${segmentEnd - 1} = ${i}`);
+
+                // Calculate segment center without SVG offset
                 segmentCenters[i] = (i - 1) * segmentAngle + segmentAngle / 2;
+            }
+
+            if (TESTING_MODE) {
+                console.log('=== TESTING MODE ===');
+                testDegreeDetection();
             }
 
             generateWheelSVG();
@@ -409,7 +428,7 @@
                 const textX = textRadius * Math.cos(textRad - Math.PI / 2);
                 const textY = textRadius * Math.sin(textRad - Math.PI / 2);
 
-                // Create text element
+                // Create text element - reverse the number order
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 text.setAttribute('x', textX);
                 text.setAttribute('y', textY);
@@ -418,7 +437,7 @@
                 text.setAttribute('fill', 'white');
                 text.setAttribute('font-size', totalNumbers > 10 ? '18' : '24');
                 text.setAttribute('font-weight', 'bold');
-                text.textContent = i + 1;
+                text.textContent = totalNumbers - i; // Reverse order: 6,5,4,3,2,1
 
                 segmentsContainer.appendChild(path);
                 segmentsContainer.appendChild(text);
@@ -441,6 +460,20 @@
         function spinWheel() {
             if (isSpinning || availableNumbers.length === 0) return;
 
+            if (TESTING_MODE) {
+                // Test mode: add 60 degrees each time
+                testRotation += 62;
+                const wheel = document.getElementById('wheel');
+                wheel.style.transform = `rotate(${testRotation}deg)`;
+
+                setTimeout(() => {
+                    const finalPosition = ((testRotation % 360) + 360) % 360;
+                    const detectedNumber = detectNumberAtPointer(finalPosition);
+                    console.log(`Test rotation: ${testRotation}°, Final position: ${finalPosition}°, Detected number: ${detectedNumber}`);
+                }, 100);
+                return;
+            }
+
             isSpinning = true;
             const spinBtn = document.getElementById('spinBtn');
             const wheel = document.getElementById('wheel');
@@ -450,25 +483,47 @@
             spinBtn.textContent = 'SPINNING...';
             result.textContent = '';
 
-            // Select random number from available numbers
+            // Reset wheel to 0 degrees first
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            currentRotation = 0;
+
+            // Force reflow to ensure the reset takes effect
+            wheel.offsetHeight;
+
+            // Re-enable transition for the spin
+            wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+
+            // Select a random available number
             const randomIndex = Math.floor(Math.random() * availableNumbers.length);
             const selectedNumber = availableNumbers[randomIndex];
 
-            // Get the center angle for the selected segment
+            // Get target position (center of selected segment)
             const targetSegmentCenter = segmentCenters[selectedNumber];
 
-            // Add multiple full rotations for effect (5-8 full spins)
-            const fullRotations = (Math.floor(Math.random() * 4) + 5) * 360;
+            // Add exactly 3 full rotations (1080 degrees) + target position
+            const fullRotations = 3 * 360;
+            const finalRotation = fullRotations + targetSegmentCenter;
 
-            // Calculate final rotation: we want to rotate so the segment center ends up at the top (0°)
-            const finalRotation = fullRotations + (360 - targetSegmentCenter);
+            console.log('Reset to 0°, Selected number:', selectedNumber, 'Target center:', targetSegmentCenter, 'Final rotation:', finalRotation);
 
-            wheel.style.transform = `rotate(${finalRotation}deg)`;
+            // Apply the rotation after a small delay to ensure reset took effect
+            setTimeout(() => {
+                wheel.style.transform = `rotate(${finalRotation}deg)`;
+            }, 50);
 
             // Wait for animation to complete
             setTimeout(() => {
+                // Calculate final position within 360 degrees
+                const finalPosition = ((finalRotation % 360) + 360) % 360;
+
+                console.log('Final position:', finalPosition, 'Selected number:', selectedNumber);
+
                 // Remove the selected number from available numbers
                 availableNumbers.splice(randomIndex, 1);
+
+                // Update current rotation
+                currentRotation = finalRotation;
 
                 // Add to selected sequence
                 selectedSequence.push(selectedNumber);
@@ -531,6 +586,7 @@
             availableNumbers = Array.from({ length: totalNumbers }, (_, i) => i + 1);
             isSpinning = false;
             selectedSequence = [];
+            currentRotation = 0;
 
             const spinBtn = document.getElementById('spinBtn');
             const wheel = document.getElementById('wheel');
@@ -553,8 +609,6 @@
 
             // Reset sequence display
             updateSequenceDisplay();
-
-            initializeWheel();
         }
 
         function showSetup() {
@@ -564,9 +618,12 @@
 
         function initializeWheel() {
             const wheel = document.getElementById('wheel');
-            const initialRotation = Math.floor(Math.random() * 360);
-            wheel.style.transform = `rotate(${initialRotation}deg)`;
+            // Always start from 0 degrees
+            currentRotation = 0;
+            wheel.style.transform = 'rotate(0deg)';
             wheel.style.transition = 'none';
+
+            console.log('Initial setup - starting from 0 degrees');
 
             setTimeout(() => {
                 wheel.style.transition = 'transform 4s cubic-bezier(0.23, 1, 0.32, 1)';
@@ -581,6 +638,31 @@
                 }
             });
         });
+
+        function detectNumberAtPointer(finalPosition) {
+            const segmentAngle = 360 / totalNumbers;
+
+            // Use position directly
+            const adjustedPosition = finalPosition;
+
+            for (let i = 1; i <= totalNumbers; i++) {
+                const segmentStart = (i - 1) * segmentAngle;
+                const segmentEnd = i * segmentAngle;
+
+                if (adjustedPosition >= segmentStart && adjustedPosition < segmentEnd) {
+                    return i;
+                }
+            }
+            return 1; // fallback
+        }
+
+        function testDegreeDetection() {
+            console.log('Testing degree detection:');
+            for (let deg = 0; deg < 360; deg += 80) {
+                const detectedNumber = detectNumberAtPointer(deg);
+                console.log(`Degree ${deg}: Number ${detectedNumber}`);
+            }
+        }
     </script>
 </body>
 
