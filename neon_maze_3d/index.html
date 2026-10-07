@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neon Maze 3D</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background: #02040c;
+      color: #e8fbff;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .stats {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .chip {
+      min-width: 110px;
+      padding: 10px 14px;
+      border: 1px solid rgba(80, 235, 255, 0.35);
+      border-radius: 12px;
+      background: rgba(2, 9, 24, 0.72);
+      box-shadow: 0 0 24px rgba(23, 208, 255, 0.12);
+      backdrop-filter: blur(8px);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 2px;
+      color: #72d9ef;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .message {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      width: min(90vw, 620px);
+      padding: 28px;
+      border: 1px solid rgba(72, 234, 255, 0.42);
+      border-radius: 20px;
+      background: rgba(2, 7, 21, 0.88);
+      box-shadow: 0 0 70px rgba(0, 208, 255, 0.2);
+      text-align: center;
+      transform: translateX(-50%);
+      pointer-events: auto;
+    }
+
+    .message.hidden {
+      display: none;
+    }
+
+    h1 {
+      margin: 0;
+      color: #80f6ff;
+      font-size: clamp(36px, 7vw, 74px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      text-shadow: 0 0 28px #00c8ff;
+    }
+
+    p {
+      color: #bdd9e8;
+      line-height: 1.6;
+    }
+
+    button {
+      padding: 13px 24px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #30efff, #876bff);
+      color: #020716;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(54, 224, 255, 0.45);
+    }
+
+    .help {
+      position: absolute;
+      right: 20px;
+      bottom: 18px;
+      color: rgba(216, 246, 255, 0.7);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-align: right;
+    }
+
+    .crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 8px;
+      border: 1px solid rgba(141, 247, 255, 0.8);
+      border-radius: 50%;
+      box-shadow: 0 0 8px #33eeff;
+      transform: translate(-50%, -50%);
+    }
+
+    .icon-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(80, 235, 255, 0.35);
+      border-radius: 12px;
+      background: rgba(2, 9, 24, 0.72);
+      box-shadow: 0 0 24px rgba(23, 208, 255, 0.12);
+      color: #80f6ff;
+      font-size: 20px;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .settings-panel {
+      position: absolute;
+      top: 74px;
+      right: 20px;
+      width: min(88vw, 300px);
+      padding: 20px;
+      border: 1px solid rgba(72, 234, 255, 0.42);
+      border-radius: 16px;
+      background: rgba(2, 7, 21, 0.92);
+      box-shadow: 0 0 50px rgba(0, 208, 255, 0.18);
+      pointer-events: auto;
+      backdrop-filter: blur(8px);
+    }
+
+    .settings-panel.hidden {
+      display: none;
+    }
+
+    .settings-panel h2 {
+      margin: 0 0 14px;
+      color: #80f6ff;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+    }
+
+    .settings-panel label {
+      display: block;
+      margin-bottom: 14px;
+      color: #bdd9e8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .settings-panel input[type="range"] {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      accent-color: #30efff;
+    }
+
+    .checkbox-label {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+      text-transform: none !important;
+    }
+
+    .checkbox-label input {
+      accent-color: #30efff;
+    }
+
+    .settings-panel button {
+      width: 100%;
+      padding: 10px 18px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .stats {
+        top: 10px;
+        left: 10px;
+        gap: 6px;
+      }
+
+      .chip {
+        min-width: 86px;
+        padding: 8px 10px;
+      }
+
+      .value {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Neon Maze 3D game"></canvas>
+  <div class="hud">
+    <div class="stats">
+      <div class="chip"><span class="label">Level</span><span class="value" id="level">1 / 10</span></div>
+      <div class="chip"><span class="label">Crystals</span><span class="value" id="score">0 / 4</span></div>
+      <div class="chip"><span class="label">Time</span><span class="value" id="time">90</span></div>
+      <div class="chip"><span class="label">Energy</span><span class="value" id="energy">100</span></div>
+    </div>
+    <div class="crosshair"></div>
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">⚙</button>
+    <div class="settings-panel hidden" id="settingsPanel">
+      <h2>Settings</h2>
+      <label>Master Volume
+        <input type="range" id="masterVolume" min="0" max="100" value="80">
+      </label>
+      <label>Music Volume
+        <input type="range" id="musicVolume" min="0" max="100" value="50">
+      </label>
+      <label>Sound Effects
+        <input type="range" id="sfxVolume" min="0" max="100" value="80">
+      </label>
+      <label class="checkbox-label"><input type="checkbox" id="muteToggle"> Mute All</label>
+      <button id="closeSettings">Close</button>
+    </div>
+    <div class="help">WASD / arrows to move · Mouse or Q/E to look · Shift to sprint</div>
+    <div class="message" id="message">
+      <h1>NEON<br>MAZE 3D</h1>
+      <p>Clear ten increasingly dangerous mazes. Recover every energy crystal, then find the green exit portal before the reactor timer expires.</p>
+      <button id="start">Enter the maze</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.querySelector("#game");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const levelEl = document.querySelector("#level");
+    const scoreEl = document.querySelector("#score");
+    const timeEl = document.querySelector("#time");
+    const energyEl = document.querySelector("#energy");
+    const messageEl = document.querySelector("#message");
+    const startButton = document.querySelector("#start");
+    const settingsBtn = document.querySelector("#settingsBtn");
+    const settingsPanel = document.querySelector("#settingsPanel");
+    const masterVolumeInput = document.querySelector("#masterVolume");
+    const musicVolumeInput = document.querySelector("#musicVolume");
+    const sfxVolumeInput = document.querySelector("#sfxVolume");
+    const muteToggleInput = document.querySelector("#muteToggle");
+    const closeSettingsBtn = document.querySelector("#closeSettings");
+
+    const SETTINGS_KEY = "neonMaze3D.settings";
+
+    function loadSettings() {
+      const defaults = { master: 0.8, music: 0.5, sfx: 0.8, muted: false };
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (raw) return Object.assign(defaults, JSON.parse(raw));
+      } catch (err) { /* ignore malformed storage */ }
+      return defaults;
+    }
+
+    function saveSettings() {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      } catch (err) { /* storage unavailable */ }
+    }
+
+    const settings = loadSettings();
+
+    const audio = {
+      ctx: null,
+      master: null,
+      music: null,
+      sfx: null,
+      musicTimer: null,
+      musicStep: 0
+    };
+
+    const MUSIC_PATTERN = ["A2", "E3", "A3", "E3", "C3", "G3", "C4", "G3"];
+    const NOTE_FREQ = {
+      A2: 110.0, C3: 130.81, E3: 164.81, G3: 196.0, A3: 220.0, C4: 261.63, E4: 329.63, G4: 392.0
+    };
+
+    function initAudio() {
+      if (audio.ctx) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      audio.ctx = new AudioCtx();
+      audio.master = audio.ctx.createGain();
+      audio.music = audio.ctx.createGain();
+      audio.sfx = audio.ctx.createGain();
+      audio.music.connect(audio.master);
+      audio.sfx.connect(audio.master);
+      audio.master.connect(audio.ctx.destination);
+      applyVolumeSettings();
+      startMusicLoop();
+    }
+
+    function applyVolumeSettings() {
+      if (!audio.ctx) return;
+      audio.master.gain.value = settings.muted ? 0 : settings.master;
+      audio.music.gain.value = settings.music;
+      audio.sfx.gain.value = settings.sfx;
+    }
+
+    function playMusicStep() {
+      if (!audio.ctx) return;
+      const now = audio.ctx.currentTime;
+      const note = MUSIC_PATTERN[audio.musicStep % MUSIC_PATTERN.length];
+      const freq = NOTE_FREQ[note];
+      const osc = audio.ctx.createOscillator();
+      const gain = audio.ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+      osc.connect(gain);
+      gain.connect(audio.music);
+      osc.start(now);
+      osc.stop(now + 0.45);
+
+      if (audio.musicStep % 4 === 0) {
+        const pad = audio.ctx.createOscillator();
+        const padGain = audio.ctx.createGain();
+        pad.type = "sine";
+        pad.frequency.value = freq / 2;
+        padGain.gain.setValueAtTime(0, now);
+        padGain.gain.linearRampToValueAtTime(0.08, now + 0.2);
+        padGain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+        pad.connect(padGain);
+        padGain.connect(audio.music);
+        pad.start(now);
+        pad.stop(now + 1.65);
+      }
+
+      audio.musicStep++;
+    }
+
+    function startMusicLoop() {
+      if (audio.musicTimer) return;
+      audio.musicTimer = setInterval(playMusicStep, 260);
+    }
+
+    function playTone(freq, duration, type, vol, glide) {
+      if (!audio.ctx) return;
+      const now = audio.ctx.currentTime;
+      const osc = audio.ctx.createOscillator();
+      const gain = audio.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (glide) osc.frequency.exponentialRampToValueAtTime(glide, now + duration);
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(gain);
+      gain.connect(audio.sfx);
+      osc.start(now);
+      osc.stop(now + duration + 0.05);
+    }
+
+    function sfxCrystal() {
+      playTone(880, 0.16, "sine", 0.3, 1400);
+      setTimeout(() => playTone(1320, 0.12, "sine", 0.18, 1760), 60);
+    }
+
+    function sfxDamage() {
+      playTone(180, 0.25, "sawtooth", 0.3, 60);
+    }
+
+    function sfxPortalOpen() {
+      playTone(220, 0.4, "triangle", 0.25, 440);
+    }
+
+    function sfxLevelComplete() {
+      [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, 0.3, "triangle", 0.25, null), i * 90));
+    }
+
+    function sfxGameOver() {
+      playTone(300, 0.6, "sawtooth", 0.3, 80);
+    }
+
+    function sfxClick() {
+      playTone(660, 0.08, "square", 0.15, 880);
+    }
+
+    function updateSettingsUI() {
+      masterVolumeInput.value = Math.round(settings.master * 100);
+      musicVolumeInput.value = Math.round(settings.music * 100);
+      sfxVolumeInput.value = Math.round(settings.sfx * 100);
+      muteToggleInput.checked = settings.muted;
+    }
+
+    updateSettingsUI();
+
+    settingsBtn.addEventListener("click", () => {
+      initAudio();
+      settingsPanel.classList.toggle("hidden");
+    });
+    closeSettingsBtn.addEventListener("click", () => settingsPanel.classList.add("hidden"));
+    masterVolumeInput.addEventListener("input", event => {
+      settings.master = Number(event.target.value) / 100;
+      applyVolumeSettings();
+      saveSettings();
+    });
+    musicVolumeInput.addEventListener("input", event => {
+      settings.music = Number(event.target.value) / 100;
+      applyVolumeSettings();
+      saveSettings();
+    });
+    sfxVolumeInput.addEventListener("input", event => {
+      settings.sfx = Number(event.target.value) / 100;
+      applyVolumeSettings();
+      saveSettings();
+    });
+    muteToggleInput.addEventListener("change", event => {
+      settings.muted = event.target.checked;
+      applyVolumeSettings();
+      saveSettings();
+    });
+
+    const FOV = Math.PI / 3;
+    const MAX_DEPTH = 22;
+    const LEVEL_COUNT = 10;
+    const keys = new Set();
+    let width = 0;
+    let height = 0;
+    let depthBuffer = [];
+    let lastTime = performance.now();
+    let gameState = "menu";
+    let secondsLeft = 90;
+    let collected = 0;
+    let damageFlash = 0;
+    let mouseActive = false;
+    let currentLevel = 1;
+    let currentMap = [];
+    let levelConfig = null;
+
+    const player = { x: 1.5, y: 1.5, angle: 0, energy: 100 };
+    let objects = [];
+
+    function seededRandom(seed) {
+      let state = seed >>> 0;
+      return () => {
+        state = (state * 1664525 + 1013904223) >>> 0;
+        return state / 4294967296;
+      };
+    }
+
+    function shuffled(items, random) {
+      const result = [...items];
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    function generateLevel(level) {
+      const size = 15 + Math.floor((level - 1) / 2) * 2;
+      const crystalCount = 3 + Math.ceil(level / 2);
+      const enemyCount = 1 + Math.floor(level * 0.65);
+      const random = seededRandom(7907 + level * 104729);
+      const grid = Array.from({ length: size }, () => Array(size).fill("1"));
+      const stack = [[1, 1]];
+      const directions = [[2, 0], [-2, 0], [0, 2], [0, -2]];
+      grid[1][1] = "0";
+
+      while (stack.length) {
+        const [x, y] = stack[stack.length - 1];
+        const options = shuffled(directions, random).filter(([dx, dy]) => {
+          const nx = x + dx;
+          const ny = y + dy;
+          return nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && grid[ny][nx] === "1";
+        });
+        if (!options.length) {
+          stack.pop();
+          continue;
+        }
+        const [dx, dy] = options[0];
+        grid[y + dy / 2][x + dx / 2] = "0";
+        grid[y + dy][x + dx] = "0";
+        stack.push([x + dx, y + dy]);
+      }
+
+      const distances = Array.from({ length: size }, () => Array(size).fill(-1));
+      const queue = [[1, 1]];
+      distances[1][1] = 0;
+      for (let i = 0; i < queue.length; i++) {
+        const [x, y] = queue[i];
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (grid[ny]?.[nx] === "0" && distances[ny][nx] === -1) {
+            distances[ny][nx] = distances[y][x] + 1;
+            queue.push([nx, ny]);
+          }
+        }
+      }
+
+      const cells = queue
+        .map(([x, y]) => ({ x, y, distance: distances[y][x] }))
+        .filter(cell => cell.distance > 5)
+        .sort((a, b) => b.distance - a.distance);
+      const portalCell = cells[0];
+      const used = new Set([`${portalCell.x},${portalCell.y}`]);
+      const crystals = [];
+
+      for (let i = 0; i < crystalCount; i++) {
+        const target = Math.floor((i + 1) * (cells.length - 1) / (crystalCount + 1));
+        let index = target;
+        while (index < cells.length && used.has(`${cells[index].x},${cells[index].y}`)) index++;
+        const cell = cells[Math.min(index, cells.length - 1)];
+        used.add(`${cell.x},${cell.y}`);
+        crystals.push({ x: cell.x + 0.5, y: cell.y + 0.5, type: "crystal", active: true });
+      }
+
+      const enemyCells = shuffled(cells.slice(Math.floor(cells.length * 0.12)), random)
+        .filter(cell => !used.has(`${cell.x},${cell.y}`))
+        .slice(0, enemyCount);
+      objects = [
+        ...crystals,
+        { x: portalCell.x + 0.5, y: portalCell.y + 0.5, type: "portal", active: true },
+        ...enemyCells.map((cell, index) => ({
+          x: cell.x + 0.5,
+          y: cell.y + 0.5,
+          type: "enemy",
+          active: true,
+          phase: index
+        }))
+      ];
+      currentMap = grid.map(row => row.join(""));
+      levelConfig = {
+        crystals: crystalCount,
+        enemySpeed: 0.48 + level * 0.055,
+        enemyDamage: 13 + level * 2.5,
+        detectionRange: 3.2 + level * 0.28,
+        time: 88 + size * 3 - level * 2
+      };
+    }
+
+    function resize() {
+      width = canvas.width = Math.min(960, Math.max(480, Math.floor(innerWidth * 0.7)));
+      height = canvas.height = Math.floor(width * innerHeight / innerWidth);
+      canvas.style.width = `${innerWidth}px`;
+      canvas.style.height = `${innerHeight}px`;
+      ctx.imageSmoothingEnabled = false;
+    }
+
+    function isWall(x, y) {
+      const mx = Math.floor(x);
+      const my = Math.floor(y);
+      return my < 0 || my >= currentMap.length || mx < 0 || mx >= currentMap[0].length || currentMap[my][mx] === "1";
+    }
+
+    function normalizeAngle(angle) {
+      while (angle > Math.PI) angle -= Math.PI * 2;
+      while (angle < -Math.PI) angle += Math.PI * 2;
+      return angle;
+    }
+
+    function castRay(angle) {
+      const sin = Math.sin(angle);
+      const cos = Math.cos(angle);
+      let depth = 0;
+      let hitX = 0;
+      let hitY = 0;
+
+      while (depth < MAX_DEPTH) {
+        depth += 0.025;
+        hitX = player.x + cos * depth;
+        hitY = player.y + sin * depth;
+        if (isWall(hitX, hitY)) break;
+      }
+
+      const fx = hitX - Math.floor(hitX);
+      const fy = hitY - Math.floor(hitY);
+      const edge = Math.min(fx, 1 - fx, fy, 1 - fy);
+      return { depth, edge };
+    }
+
+    function drawWorld(now) {
+      const horizon = height * 0.48;
+      const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+      sky.addColorStop(0, "#02030b");
+      sky.addColorStop(1, "#112048");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, width, horizon);
+
+      const floor = ctx.createLinearGradient(0, horizon, 0, height);
+      floor.addColorStop(0, "#3c3f45");
+      floor.addColorStop(1, "#1d1f23");
+      ctx.fillStyle = floor;
+      ctx.fillRect(0, horizon, width, height - horizon);
+
+      ctx.strokeStyle = "rgba(37, 210, 255, 0.09)";
+      for (let y = horizon + 8; y < height; y += Math.max(5, (y - horizon) * 0.18)) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      const rayCount = Math.min(width, 640);
+      const stripWidth = width / rayCount + 1;
+      depthBuffer = new Array(rayCount);
+
+      for (let ray = 0; ray < rayCount; ray++) {
+        const rayAngle = player.angle - FOV / 2 + (ray / rayCount) * FOV;
+        const hit = castRay(rayAngle);
+        const correctedDepth = hit.depth * Math.cos(rayAngle - player.angle);
+        depthBuffer[ray] = correctedDepth;
+        const wallHeight = Math.min(height * 1.5, height / Math.max(0.01, correctedDepth));
+        const brightness = Math.max(24, 185 - correctedDepth * 11);
+        const pulse = Math.sin(now * 0.002 + correctedDepth) * 8;
+        const edgeShade = hit.edge < 0.035 ? 0.55 : 1;
+        ctx.fillStyle = `rgb(${Math.floor((22 + pulse) * edgeShade)}, ${Math.floor(brightness * 0.72 * edgeShade)}, ${Math.floor(brightness * edgeShade)})`;
+        ctx.fillRect(ray * stripWidth, horizon - wallHeight / 2, stripWidth + 1, wallHeight);
+      }
+
+      drawSprites(now, rayCount);
+
+      const vignette = ctx.createRadialGradient(width / 2, height / 2, height * 0.15, width / 2, height / 2, width * 0.7);
+      vignette.addColorStop(0, "rgba(0,0,0,0)");
+      vignette.addColorStop(1, "rgba(0,0,8,0.78)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+
+      if (damageFlash > 0) {
+        ctx.fillStyle = `rgba(255, 20, 70, ${damageFlash * 0.35})`;
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+
+    function drawSprites(now, rayCount) {
+      const visible = objects
+        .filter(object => object.active)
+        .map(object => {
+          const dx = object.x - player.x;
+          const dy = object.y - player.y;
+          return { object, distance: Math.hypot(dx, dy), angle: normalizeAngle(Math.atan2(dy, dx) - player.angle) };
+        })
+        .filter(item => Math.abs(item.angle) < FOV * 0.7 && item.distance > 0.2)
+        .sort((a, b) => b.distance - a.distance);
+
+      for (const item of visible) {
+        const screenX = width * (0.5 + item.angle / FOV);
+        const size = Math.min(height * 1.3, height / item.distance);
+        const rayIndex = Math.max(0, Math.min(rayCount - 1, Math.floor(screenX / width * rayCount)));
+        if (item.distance > depthBuffer[rayIndex] + 0.25) continue;
+
+        const bob = Math.sin(now * 0.004 + item.distance) * size * 0.04;
+        const y = height * 0.48 - size * 0.48 + bob;
+        ctx.save();
+        ctx.translate(screenX, y);
+
+        if (item.object.type === "crystal") drawCrystal(size, now);
+        if (item.object.type === "enemy") drawEnemy(size, now);
+        if (item.object.type === "portal") drawPortal(size, now);
+        ctx.restore();
+      }
+    }
+
+    function drawCrystal(size, now) {
+      const s = size * 0.32;
+      ctx.shadowBlur = size * 0.2;
+      ctx.shadowColor = "#4ff6ff";
+      ctx.fillStyle = `hsl(${185 + Math.sin(now * 0.004) * 18} 100% 68%)`;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(s * 0.58, s * 0.45);
+      ctx.lineTo(0, s * 1.45);
+      ctx.lineTo(-s * 0.58, s * 0.45);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.beginPath();
+      ctx.moveTo(0, s * 0.08);
+      ctx.lineTo(s * 0.13, s * 0.46);
+      ctx.lineTo(0, s * 1.12);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawEnemy(size, now) {
+      const s = size * 0.24;
+      ctx.shadowBlur = size * 0.18;
+      ctx.shadowColor = "#ff174f";
+      ctx.fillStyle = "#b20f39";
+      ctx.beginPath();
+      ctx.arc(0, s * 0.7, s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ff5a79";
+      ctx.lineWidth = Math.max(1, size * 0.025);
+      ctx.beginPath();
+      ctx.arc(0, s * 0.7, s * (1.22 + Math.sin(now * 0.008) * 0.08), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(-s * 0.48, s * 0.52, s * 0.3, s * 0.17);
+      ctx.fillRect(s * 0.18, s * 0.52, s * 0.3, s * 0.17);
+    }
+
+    function drawPortal(size, now) {
+      const open = collected === levelConfig.crystals;
+      const s = size * 0.4;
+      ctx.shadowBlur = size * 0.25;
+      ctx.shadowColor = open ? "#51ff83" : "#ffb339";
+      ctx.strokeStyle = open ? "#62ff91" : "#ffae35";
+      ctx.lineWidth = Math.max(2, size * 0.06);
+      ctx.beginPath();
+      ctx.ellipse(0, s * 0.75, s * 0.68, s * 1.08, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = open ? "rgba(45,255,112,0.2)" : "rgba(255,151,45,0.18)";
+      ctx.fill();
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = open ? `rgba(120,255,165,${0.6 - i * 0.15})` : `rgba(255,190,90,${0.6 - i * 0.15})`;
+        ctx.beginPath();
+        ctx.arc(0, s * 0.75, s * (0.3 + i * 0.15), now * 0.001 + i, now * 0.001 + i + Math.PI);
+        ctx.stroke();
+      }
+    }
+
+    function canMove(x, y) {
+      const radius = 0.18;
+      return !isWall(x - radius, y - radius) && !isWall(x + radius, y - radius) &&
+             !isWall(x - radius, y + radius) && !isWall(x + radius, y + radius);
+    }
+
+    function update(dt, now) {
+      if (gameState !== "playing") return;
+
+      secondsLeft -= dt;
+      if (secondsLeft <= 0 || player.energy <= 0) {
+        finish(false, player.energy <= 0 ? "Your energy was drained by the sentinels." : "The reactor timer expired.");
+        return;
+      }
+
+      const turn = (keys.has("ArrowLeft") || keys.has("KeyQ") ? -1 : 0) + (keys.has("ArrowRight") || keys.has("KeyE") ? 1 : 0);
+      player.angle += turn * dt * 2.2;
+
+      const forward = (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0) - (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0);
+      const strafe = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
+      const speed = keys.has("ShiftLeft") || keys.has("ShiftRight") ? 3.5 : 2.25;
+      const moveX = (Math.cos(player.angle) * forward + Math.cos(player.angle + Math.PI / 2) * strafe) * speed * dt;
+      const moveY = (Math.sin(player.angle) * forward + Math.sin(player.angle + Math.PI / 2) * strafe) * speed * dt;
+
+      if (canMove(player.x + moveX, player.y)) player.x += moveX;
+      if (canMove(player.x, player.y + moveY)) player.y += moveY;
+
+      for (const object of objects) {
+        if (!object.active) continue;
+        if (object.type === "enemy") {
+          object.phase += dt;
+          const distance = Math.hypot(object.x - player.x, object.y - player.y);
+          if (distance < levelConfig.detectionRange) {
+            const chaseSpeed = levelConfig.enemySpeed * dt;
+            const angle = Math.atan2(player.y - object.y, player.x - object.x);
+            const nx = object.x + Math.cos(angle) * chaseSpeed;
+            const ny = object.y + Math.sin(angle) * chaseSpeed;
+            if (!isWall(nx, object.y)) object.x = nx;
+            if (!isWall(object.x, ny)) object.y = ny;
+          }
+          if (distance < 0.72) {
+            if (damageFlash <= 0.02) sfxDamage();
+            player.energy -= levelConfig.enemyDamage * dt;
+            damageFlash = Math.min(1, damageFlash + dt * 4);
+          }
+        }
+
+        const distance = Math.hypot(object.x - player.x, object.y - player.y);
+        if (object.type === "crystal" && distance < 0.55) {
+          object.active = false;
+          collected++;
+          player.energy = Math.min(100, player.energy + 12);
+          sfxCrystal();
+          if (collected === levelConfig.crystals) sfxPortalOpen();
+        }
+        if (object.type === "portal" && distance < 0.7 && collected === levelConfig.crystals) {
+          completeLevel();
+          return;
+        }
+      }
+
+      damageFlash = Math.max(0, damageFlash - dt * 1.8);
+      scoreEl.textContent = `${collected} / ${levelConfig.crystals}`;
+      timeEl.textContent = Math.max(0, Math.ceil(secondsLeft));
+      energyEl.textContent = Math.max(0, Math.ceil(player.energy));
+      energyEl.style.color = player.energy < 30 ? "#ff5277" : "";
+    }
+
+    function finish(won, detail) {
+      gameState = won ? "won" : "lost";
+      document.exitPointerLock?.();
+      messageEl.classList.remove("hidden");
+      messageEl.querySelector("h1").innerHTML = won ? "MAZE<br>CLEARED" : "SYSTEM<br>FAILED";
+      messageEl.querySelector("p").textContent = detail;
+      startButton.textContent = won ? "Continue" : `Retry level ${currentLevel}`;
+      if (won) sfxLevelComplete(); else sfxGameOver();
+    }
+
+    function completeLevel() {
+      const remaining = Math.ceil(secondsLeft);
+      if (currentLevel === LEVEL_COUNT) {
+        gameState = "completed";
+        document.exitPointerLock?.();
+        messageEl.classList.remove("hidden");
+        messageEl.querySelector("h1").innerHTML = "CAMPAIGN<br>COMPLETE";
+        messageEl.querySelector("p").textContent = `You conquered all ten mazes and escaped the reactor with ${remaining} seconds remaining.`;
+        startButton.textContent = "Play again";
+        sfxLevelComplete();
+        return;
+      }
+
+      finish(true, `Level ${currentLevel} cleared with ${remaining} seconds remaining. Level ${currentLevel + 1} adds a larger maze and more dangerous sentinels.`);
+      currentLevel++;
+    }
+
+    function startGame() {
+      if (gameState === "completed") currentLevel = 1;
+      generateLevel(currentLevel);
+      player.x = 1.5;
+      player.y = 1.5;
+      player.angle = 0;
+      player.energy = 100;
+      secondsLeft = levelConfig.time;
+      collected = 0;
+      damageFlash = 0;
+      levelEl.textContent = `${currentLevel} / ${LEVEL_COUNT}`;
+      scoreEl.textContent = `0 / ${levelConfig.crystals}`;
+      timeEl.textContent = Math.ceil(secondsLeft);
+      energyEl.textContent = "100";
+      energyEl.style.color = "";
+      messageEl.classList.add("hidden");
+      gameState = "playing";
+      canvas.requestPointerLock?.();
+    }
+
+    function loop(now) {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      update(dt, now);
+      drawWorld(now);
+      requestAnimationFrame(loop);
+    }
+
+    addEventListener("resize", resize);
+    addEventListener("keydown", event => {
+      keys.add(event.code);
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(event.code)) event.preventDefault();
+    });
+    addEventListener("keyup", event => keys.delete(event.code));
+    addEventListener("mousemove", event => {
+      if (document.pointerLockElement === canvas && gameState === "playing") {
+        player.angle += event.movementX * 0.0025;
+        mouseActive = true;
+      }
+    });
+    canvas.addEventListener("click", () => {
+      if (gameState === "playing" && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+    });
+    startButton.addEventListener("click", () => {
+      initAudio();
+      sfxClick();
+      startGame();
+    });
+
+    resize();
+    generateLevel(1);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

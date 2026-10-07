@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#140810" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23140810'/%3E%3Cpath d='M6 20h20l-3-6H9z' fill='%23ff2d95'/%3E%3C/svg%3E" />
+  <title>Shred Street 3D</title>
+</head>
+<body>
+  <canvas id="c" aria-hidden="true"></canvas>
+  <div id="flash"></div>
+  <div id="vignette"></div>
+  <div id="ui">
+    <header id="hud" hidden>
+      <div class="stat">
+        <span>Score</span>
+        <strong id="score">0</strong>
+        <em id="combo"></em>
+      </div>
+      <div class="mid">
+        <p id="zone">The Suburbs</p>
+        <p id="mult" hidden>2×</p>
+      </div>
+      <div class="stat right">
+        <span>Best</span>
+        <strong id="best">0</strong>
+      </div>
+      <p id="kmh">0 km/h</p>
+      <p id="meters">0 m</p>
+    </header>
+    <p id="callout" hidden></p>
+    <p id="hint" hidden></p>
+    <section id="title">
+      <div class="title-card">
+        <p class="eyebrow">Endless runner</p>
+        <h1>SHRED<br />STREET</h1>
+        <p class="badge">3D</p>
+        <button id="play" type="button">SHRED</button>
+        <ul>
+          <li><kbd>A</kbd><kbd>D</kbd> or swipe to switch lanes</li>
+          <li><kbd>Space</kbd> or swipe up to jump</li>
+          <li>Hold <kbd>Down</kbd> to duck and keep speeding up</li>
+          <li><kbd>Up</kbd> arrow slows down</li>
+          <li>Jump a glowing lip for a perfect flip</li>
+        </ul>
+        <p class="best-line">Best <span id="title-best">0</span></p>
+      </div>
+    </section>
+    <section id="pause" hidden>
+      <div class="panel">
+        <h2>PAUSED</h2>
+        <button id="resume" type="button">RESUME</button>
+      </div>
+    </section>
+    <section id="over" hidden>
+      <div class="panel">
+        <h2>WIPED OUT</h2>
+        <p id="final-score">0</p>
+        <p id="new-best" hidden>NEW BEST</p>
+        <dl>
+          <div><dt>Distance</dt><dd id="final-dist">0 m</dd></div>
+          <div><dt>Coins</dt><dd id="final-coins">0</dd></div>
+          <div><dt>Perfects</dt><dd id="final-perfects">0</dd></div>
+          <div><dt>Best</dt><dd id="final-best">0</dd></div>
+        </dl>
+        <button id="retry" type="button">RETRY</button>
+      </div>
+    </section>
+    <div id="touch" hidden>
+      <button id="btn-left" type="button" aria-label="Lane left">◀</button>
+      <button id="btn-down" type="button" aria-label="Hold to duck and speed up">▼</button>
+      <button id="btn-jump" type="button">JUMP</button>
+      <button id="btn-right" type="button" aria-label="Lane right">▶</button>
+    </div>
+    <button id="mute" type="button" aria-label="Mute" aria-pressed="false">♪</button>
+    <button id="pause-btn" type="button" aria-label="Pause" hidden>II</button>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

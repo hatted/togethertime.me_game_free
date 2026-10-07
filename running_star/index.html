@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lumen Run</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%23140e1c' width='32' height='32' rx='8'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ffd7a4'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%237ef0d0' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body data-state="title">
+  <canvas id="view" aria-hidden="true"></canvas>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="flash" aria-hidden="true"></div>
+
+  <header id="hud">
+    <div class="hud-block">
+      <p class="kicker">Score</p>
+      <p id="score" class="stat">0</p>
+      <p id="shards" class="substat">Shards 0</p>
+      <p id="level-name" class="substat">Isle 1</p>
+      <p id="combo" class="combo" hidden>×2</p>
+    </div>
+    <div class="hud-block center">
+      <div id="light" aria-label="Light remaining">
+        <div id="light-fill"></div>
+      </div>
+      <p id="light-label" class="kicker">Light</p>
+    </div>
+    <div class="hud-block right">
+      <div id="pips" aria-label="Lives"></div>
+      <p id="clock" class="substat">0:00</p>
+      <div class="hud-actions">
+        <button id="mute" type="button">Sound</button>
+        <button id="pause-btn" type="button">Pause</button>
+      </div>
+    </div>
+  </header>
+
+  <p id="hint" aria-live="polite"></p>
+
+  <section id="title">
+    <div class="poster">
+      <p id="title-kicker" class="eyebrow">Isle of the last light</p>
+      <h1>Lumen<br />Run</h1>
+      <p class="lede">Ten isles, each one darker than the last. Gather shards, keep your light burning, and step through the gate.</p>
+      <div id="levels" class="levels" role="group" aria-label="Isles"></div>
+      <button id="play" class="primary" type="button">Begin isle 1</button>
+      <label class="setting">
+        <span class="setting-name">Settings</span>
+        <span class="setting-vol">Volume <span id="volume-readout">70</span></span>
+        <input id="volume" type="range" min="0" max="100" step="1" value="70" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" aria-label="Volume" />
+      </label>
+      <ul class="keys">
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</li>
+        <li><kbd>Space</kbd> jump</li>
+        <li><kbd>Shift</kbd> dash</li>
+        <li><kbd>Esc</kbd> pause</li>
+      </ul>
+      <p id="best" class="best"></p>
+    </div>
+  </section>
+
+  <section id="pause" class="sheet">
+    <div class="card">
+      <p class="eyebrow">Paused</p>
+      <h2>The light waits</h2>
+      <p>The isles hold still until you return.</p>
+      <div class="row">
+        <button id="resume" class="primary" type="button">Resume</button>
+        <button id="quit" type="button">Title</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="end" class="sheet">
+    <div class="card">
+      <p id="end-kicker" class="eyebrow">Run over</p>
+      <h2 id="end-title">The gate opens</h2>
+      <dl id="end-stats"></dl>
+      <div class="row">
+        <button id="next" class="primary" type="button" hidden>Next isle</button>
+        <button id="retry" class="primary" type="button">Run again</button>
+        <button id="to-title" type="button">Title</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="touch" aria-hidden="true">
+    <div id="stick"><div id="knob"></div></div>
+    <div class="touch-actions">
+      <button id="btn-dash" type="button">Dash</button>
+      <button id="btn-jump" type="button">Jump</button>
+    </div>
+  </div>
+
+  <p id="boot-error" hidden>The scene didn’t start. This game needs WebGL and a connection to load its renderer. If you opened the file directly, serve the folder instead: <code>python3 -m http.server</code></p>
+  <pre id="selftest" hidden></pre>
+  <noscript>Lumen Run needs JavaScript and WebGL.</noscript>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
